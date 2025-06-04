@@ -58,9 +58,9 @@ def fetch_abusech_data():
 
             print("📖 Reading CSV data...")
             row_count = 0
-            max_rows = 10  # Keep the 10-row limit
+            max_rows = 10  #
             
-            # Use csv.DictReader for safe parsing
+            Use csv.DictReader for safe parsing
             text_stream = io.TextIOWrapper(csv_file, encoding="utf-8", newline='')
             reader = csv.reader(
                 (line for line in text_stream if not line.startswith("#")),
@@ -79,7 +79,7 @@ def fetch_abusech_data():
 
                     print(f"➡️ Processing row {row_count + 1}: {url_val} [{threat_type}]")
 
-                    # Save to DB
+                    
                     conn = mysql.connector.connect(
                         host="localhost",
                         user="root",
@@ -99,7 +99,7 @@ def fetch_abusech_data():
                     cursor.close()
                     conn.close()
 
-                    # Block the URL's IP
+                    
                     block_url(url_val)
 
                     row_count += 1
