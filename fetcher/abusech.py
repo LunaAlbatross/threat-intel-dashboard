@@ -7,7 +7,6 @@ import mysql.connector
 import socket
 from urllib.parse import urlparse
 
-# Function to resolve URL to IP
 def resolve_ip(url):
     try:
         parsed = urlparse(url)
@@ -20,7 +19,6 @@ def resolve_ip(url):
         print(f"❌ Couldn’t resolve {url}: {e}")
         return None
 
-# Function to block IP using UFW
 def block_url(url):
     ip = resolve_ip(url)
     if ip:
