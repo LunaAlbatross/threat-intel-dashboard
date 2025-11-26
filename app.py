@@ -1,6 +1,8 @@
 from flask import Flask, render_template
 from flask import render_template_string
 import mysql.connector
+from flask import jsonify, request
+from unblock_urls import unblock_url
 
 app = Flask(__name__)
 
@@ -8,7 +10,7 @@ def get_db_data():
     try:
         conn = mysql.connector.connect(
             host='localhost',
-            user='root',
+            user='threat_user',
             password='koWsi67',
             database='threat_dashboard'
         )
@@ -43,15 +45,36 @@ def refresh_table():
             <td class="phish-id">{{ row[1] }}</td>
             <td>
                 {% if row[2] == "online" %}
-                    <span class="status status-online">Active</span>
+                    <span class="status status-online">
+                        <i class="fas fa-exclamation-circle"></i>Active
+                    </span>
                 {% else %}
-                    <span class="status status-offline">Neutralized</span>
+                    <span class="status status-offline">
+                        <i class="fas fa-ban"></i>Neutralized
+                    </span>
                 {% endif %}
             </td>
             <td><span class="target-badge">{{ row[3] }}</span></td>
+            <td>
+                <button class="unblock-btn" data-url="{{ row[0] }}">
+                    Unblock
+                </button>
+            </td>
         </tr>
         {% endfor %}
     """, threats=data)
+
+@app.route("/unblock", methods=["POST"])
+def unblock_route():
+    data = request.get_json() or request.form
+    url = data.get("url")
+
+    if not url:
+        return jsonify({"success": False, "message": "No URL provided"}), 400
+
+    success, message = unblock_url(url)
+    status = 200 if success else 500
+    return jsonify({"success": success, "message": message}), status
 
 if __name__ == '__main__':
     print("🚀 Starting Flask app...")

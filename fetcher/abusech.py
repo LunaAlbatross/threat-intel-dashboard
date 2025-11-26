@@ -58,7 +58,7 @@ def fetch_abusech_data():
             row_count = 0
             max_rows = 10  #
             
-            Use csv.DictReader for safe parsing
+            #Use csv.DictReader for safe parsing
             text_stream = io.TextIOWrapper(csv_file, encoding="utf-8", newline='')
             reader = csv.reader(
                 (line for line in text_stream if not line.startswith("#")),
@@ -80,7 +80,7 @@ def fetch_abusech_data():
                     
                     conn = mysql.connector.connect(
                         host="localhost",
-                        user="root",
+                        user="threat_user",
                         password="koWsi67",
                         database="threat_dashboard"
                     )

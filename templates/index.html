@@ -172,6 +172,23 @@ tr:hover {
     text-align: center;
 }
 
+unblock-btn {
+    background-color: transparent;
+    color: #00ffcc;
+    border: 1px solid rgba(0, 255, 204, 0.6);
+    padding: 4px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 0.85em;
+    transition: background-color 0.2s, transform 0.1s;
+}
+
+.unblock-btn:hover {
+    background-color: rgba(0, 255, 204, 0.15);
+    transform: translateY(-1px);
+}
+
 .fade-in {
     animation: fadeIn 0.5s ease-in;
 }
@@ -247,6 +264,33 @@ form {
     0%, 100% { opacity: 1; }
     50% { opacity: 0; }
 }
+
+.unblock-btn {
+    background: transparent;
+    color: #00ff9f;
+    border: 1px solid rgba(0, 255, 159, 0.6);
+    padding: 6px 14px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 0.85em;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    box-shadow: 0 0 6px rgba(0, 255, 159, 0.3);
+    transition: all 0.2s ease-in-out;
+}
+
+.unblock-btn:hover {
+    background-color: rgba(0, 255, 159, 0.15);
+    box-shadow: 0 0 12px rgba(0, 255, 159, 0.7);
+    transform: translateY(-1px);
+}
+
+.unblock-btn:active {
+    transform: scale(0.95);
+    box-shadow: 0 0 6px rgba(0, 255, 159, 0.4);
+}
+
 </style>
 </head>
 <body>
@@ -281,6 +325,7 @@ form {
                 <th>Threat ID</th>
                 <th>Status</th>
                 <th>Threat</th>
+                <th>Actions</th>
             </tr>
         </thead>
         <tbody>
@@ -296,6 +341,11 @@ form {
                     {% endif %}
                 </td>
                 <td><span class="target-badge">{{ row[3] }}</span></td>
+                <td>
+                    <button class="unblock-btn" data-url="{{ row[0] }}">
+                        Unblock
+                    </button>
+                </td>
             </tr>
             {% endfor %}
         </tbody>
@@ -331,6 +381,43 @@ form {
     setInterval(refreshTable, 30000);
 
     refreshTable();
+</script>
+
+<script>
+    // Event delegation so it still works after table refresh
+    document.addEventListener("click", function (e) {
+        const btn = e.target.closest(".unblock-btn");
+        if (!btn) return;
+
+        const url = btn.dataset.url;
+        if (!url) return;
+
+        if (!confirm(`Unblock firewall rule for:\n\n${url}?`)) {
+            return;
+        }
+
+        fetch("/unblock", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ url: url }),
+        })
+        .then(res => res.json())
+        .then(data => {
+            alert(data.message || (data.success ? "Unblocked" : "Failed to unblock"));
+
+            // Optional: visually dim the row after unblocking
+            if (data.success) {
+                const row = btn.closest("tr");
+                if (row) {
+                    row.style.opacity = "0.5";
+                }
+            }
+        })
+        .catch(err => {
+            console.error("Unblock request failed:", err);
+            alert("Something broke while trying to unblock.");
+        });
+    });
 </script>
 
 </body>
