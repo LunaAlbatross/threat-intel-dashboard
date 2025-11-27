@@ -35,25 +35,6 @@ Threat Feed: Abuse.ch URLhaus
 
 Scheduler: Custom Python background task
 
-📁 Project Structure
-
-threat-intel-dashboard/
-│
-├── app.py # Flask web server & API routes
-├── scheduler.py # Periodic fetch scheduler
-├── unblock_urls.py # Firewall unblock logic
-├── requirements.txt # Python dependencies
-│
-├── db/
-│ └── init_db.sql # Database initialization script
-│
-├── fetcher/
-│ ├── init.py
-│ └── abusech.py # Abuse.ch fetch + block logic
-│
-└── templates/
-└── index.html # Dashboard UI
-
 ⚙️ Setup Instructions
 1️⃣ Clone the Repository
 
