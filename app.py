@@ -66,16 +66,21 @@ def refresh_table():
 
 @app.route("/unblock", methods=["POST"])
 def unblock_route():
-    data = request.get_json() or request.form
-    url = data.get("url")
+    try:
+        data = request.get_json() or {}
+        url = data.get("url")
 
-    if not url:
-        return jsonify({"success": False, "message": "No URL provided"}), 400
+        if not url:
+            return jsonify({"success": False, "message": "No URL provided"}), 400
 
-    success, message = unblock_url(url)
-    status = 200 if success else 500
-    return jsonify({"success": success, "message": message}), status
+        success, message = unblock_url(url)
+        status_code = 200 if success else 500
+        return jsonify({"success": success, "message": message}), status_code
 
+    except Exception as e:
+        # Failsafe so the frontend *always* gets JSON
+        print(f"[UNBLOCK ERROR] {e}")
+        return jsonify({"success": False, "message": f"Server error: {e}"}), 500
 if __name__ == '__main__':
     print("🚀 Starting Flask app...")
     app.run(debug=True)

@@ -171,24 +171,6 @@ tr:hover {
     display: inline-block;
     text-align: center;
 }
-
-unblock-btn {
-    background-color: transparent;
-    color: #00ffcc;
-    border: 1px solid rgba(0, 255, 204, 0.6);
-    padding: 4px 10px;
-    border-radius: 4px;
-    cursor: pointer;
-    font-family: inherit;
-    font-size: 0.85em;
-    transition: background-color 0.2s, transform 0.1s;
-}
-
-.unblock-btn:hover {
-    background-color: rgba(0, 255, 204, 0.15);
-    transform: translateY(-1px);
-}
-
 .fade-in {
     animation: fadeIn 0.5s ease-in;
 }
@@ -384,40 +366,46 @@ form {
 </script>
 
 <script>
-    // Event delegation so it still works after table refresh
-    document.addEventListener("click", function (e) {
-        const btn = e.target.closest(".unblock-btn");
-        if (!btn) return;
+document.addEventListener("click", function (e) {
+    const btn = e.target.closest(".unblock-btn");
+    if (!btn) return;
 
-        const url = btn.dataset.url;
-        if (!url) return;
+    const url = btn.dataset.url;
+    if (!url) return;
 
-        if (!confirm(`Unblock firewall rule for:\n\n${url}?`)) {
-            return;
+    if (!confirm(`Unblock firewall rule for:\n\n${url}?`)) return;
+
+    fetch("/unblock", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url: url }),
+    })
+    .then(async res => {
+    const text = await res.text();
+    console.log("Raw response:", text);
+    let data;
+    try {
+        data = JSON.parse(text);
+    } catch (e) {
+        alert("Non-JSON response from server:\n" + text);
+        throw e;
+    }
+    return data;
+})
+
+    .then(data => {
+        alert(data.message || (data.success ? "Unblocked" : "Failed to unblock"));
+
+        if (data.success) {
+            const row = btn.closest("tr");
+            if (row) row.style.opacity = "0.5";
         }
-
-        fetch("/unblock", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ url: url }),
-        })
-        .then(res => res.json())
-        .then(data => {
-            alert(data.message || (data.success ? "Unblocked" : "Failed to unblock"));
-
-            // Optional: visually dim the row after unblocking
-            if (data.success) {
-                const row = btn.closest("tr");
-                if (row) {
-                    row.style.opacity = "0.5";
-                }
-            }
-        })
-        .catch(err => {
-            console.error("Unblock request failed:", err);
-            alert("Something broke while trying to unblock.");
-        });
+    })
+    .catch(err => {
+        console.error("Unblock request failed:", err);
+        alert("Something broke while trying to unblock.");
     });
+});
 </script>
 
 </body>

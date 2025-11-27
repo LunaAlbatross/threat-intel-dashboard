@@ -1,31 +1,52 @@
-# unblock_urls.py
 import socket
 import subprocess
+from urllib.parse import urlparse
 
-def resolve_ip(url):
+def resolve_ip(url: str):
     try:
-        # extract hostname from URL
-        from urllib.parse import urlparse
-        domain = urlparse(url).hostname
+        parsed = urlparse(url)
+        domain = parsed.hostname
         if not domain:
-            return None
-        return socket.gethostbyname(domain)
+            return None, "Invalid URL, no hostname"
+        ip = socket.gethostbyname(domain)
+        return ip, None
     except Exception as e:
-        print(f"Failed to resolve {url}: {e}")
-        return None
+        return None, str(e)
 
-def unblock_url(url):
-    ip = resolve_ip(url)
-    if not ip:
-        return False, f"Could not resolve IP for {url}"
+def unblock_url(url: str):
+    print(f"[UNBLOCK] Requested unblock for {url}")
+
+    ip, err = resolve_ip(url)
+    if err or not ip:
+        msg = f"Could not resolve IP for {url}: {err}"
+        print(msg)
+        return False, msg
+
+    # IMPORTANT: no 'sudo' here, or it'll hang waiting for password
+    cmd = ["sudo", "ufw", "delete", "deny", "out", "to", ip]
+    print(f"[UNBLOCK] Running: {' '.join(cmd)}")
 
     try:
-        subprocess.run(
-            ["sudo", "ufw", "delete", "deny", "out", "to", ip],
-            check=True
+        result = subprocess.run(
+            cmd,
+            capture_output=True,
+            text=True,
+            timeout=5,  # prevent hanging forever
         )
-        print(f"✅ Unblocked IP {ip} for {url}")
-        return True, f"Unblocked {url} ({ip})"
-    except subprocess.CalledProcessError as e:
-        print(f"❌ Failed to unblock {url} with IP {ip}: {e}")
-        return False, f"Failed to unblock {url}: {e}"
+    except subprocess.TimeoutExpired:
+        msg = "UFW command timed out"
+        print(f"[UNBLOCK ERROR] {msg}")
+        return False, msg
+
+    if result.returncode != 0:
+        msg = f"UFW failed: {result.stderr.strip()}"
+        print(f"[UNBLOCK ERROR] {msg}")
+        return False, msg
+
+    msg = f"Unblocked {url} ({ip})"
+    print(f"[UNBLOCK OK] {msg}")
+    return True, msg
+
+if __name__ == "__main__":
+    u = input("Enter URL to unblock: ")
+    print(unblock_url(u))
